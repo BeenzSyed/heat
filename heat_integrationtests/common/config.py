@@ -85,6 +85,9 @@ IntegrationTestGroup = [
     cfg.IntOpt('volume_size',
                default=1,
                help='Default size in GB for volumes created by volumes tests'),
+    cfg.StrOpt('hidden_stack_tags',
+               default='source:hidden_stack',
+               help="Tags to assign to a stack to hide the stack")
 ]
 
 

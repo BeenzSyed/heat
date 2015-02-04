@@ -311,9 +311,10 @@ class HeatIntegrationTest(testscenarios.WithScenarios,
             success_on_not_found=True)
 
     def update_stack(self, stack_identifier, template, environment=None,
-                     files=None):
+                     files=None, tags=None):
         env = environment or {}
         env_files = files or {}
+        tag = tags or {}
         stack_name = stack_identifier.split('/')[0]
         self.client.stacks.update(
             stack_id=stack_identifier,
@@ -322,7 +323,8 @@ class HeatIntegrationTest(testscenarios.WithScenarios,
             files=env_files,
             disable_rollback=True,
             parameters={},
-            environment=env
+            environment=env,
+            tags=tag
         )
         self._wait_for_stack_status(stack_identifier, 'UPDATE_COMPLETE')
 
@@ -347,20 +349,22 @@ class HeatIntegrationTest(testscenarios.WithScenarios,
         return dict((r.resource_name, r.resource_type) for r in resources)
 
     def stack_create(self, stack_name=None, template=None, files=None,
-                     parameters=None, environment=None,
+                     parameters=None, environment=None, tags=None,
                      expected_status='CREATE_COMPLETE'):
         name = stack_name or self._stack_rand_name()
         templ = template or self.template
         templ_files = files or {}
         params = parameters or {}
         env = environment or {}
+        tag = tags or {}
         self.client.stacks.create(
             stack_name=name,
             template=templ,
             files=templ_files,
             disable_rollback=True,
             parameters=params,
-            environment=env
+            environment=env,
+            tags=tag
         )
         self.addCleanup(self.client.stacks.delete, name)
 
