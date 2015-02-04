@@ -1,0 +1,75 @@
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
+import logging
+import ipdb
+from heat_integrationtests.common import test
+
+
+LOG = logging.getLogger(__name__)
+
+
+class StackTagTest(test.HeatIntegrationTest):
+
+    template = '''
+heat_template_version: 2013-05-23
+description:
+  foo
+'''
+
+    def setUp(self):
+        super(StackTagTest, self).setUp()
+        self.client = self.orchestration_client
+
+    def test_stack_tag(self):
+        #Stack create with stack tags
+        tags = {"foo": "bar", "source": "heat"}
+        stack_identifier = self.stack_create(
+            template=self.template,
+            tags=tags
+        )
+
+        #Ensure property tag is populated and matches given tags
+        stack = self.client.stacks.get(stack_identifier)
+        self.assertEqual(tags, stack.tags)
+
+        #Update tags
+        updated_tags = {"test": "1234"}
+        self.update_stack(stack_identifier,
+            template=self.template,
+            tags=updated_tags)
+
+        #Ensure property tag is populated and matches updated tags
+        updated_stack = self.client.stacks.get(stack_identifier)
+        self.assertEqual(updated_tags, updated_stack.tags)
+
+        #Delete tags
+        self.update_stack(
+            stack_identifier,
+            template=self.template
+        )
+        
+        #Ensure property tag is not populated
+        empty_tags_stack = self.client.stacks.get(stack_identifier)
+        self.assertEqual(None, empty_tags_stack.tags)
+
+    def test_hidden_stack(self):
+        #Stack create with hidden stack tag
+	tags = {"source": "hidden_stack"}
+        stack_identifier = self.stack_create(
+            template=self.template,
+            tags=tags)
+        
+        #Ensure stack does not exist when we do a stack list
+	stack = self.client.stacks.get(stack_identifier)
+        for stack_list in list(self.client.stacks.list()):
+            self.assertNotEqual(stack_list.stack_name, stack.stack_name, 'Hidden stack can be seen')
